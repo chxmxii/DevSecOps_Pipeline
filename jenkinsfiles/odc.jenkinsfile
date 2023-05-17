@@ -1,0 +1,24 @@
+pipeline {
+    agent {
+        label any
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout([$class: 'GitSCM', branches: [[name: 'main']], userRemoteConfigs: [[url: 'https://github.com/spring-petclinic/spring-framework-petclinic.git']]])
+            }
+        }
+        stage('Dependency-Check') {
+            steps {
+                dependencyCheck additionalArguments: '''
+                    -o "./"
+                    -s "./"
+                    -f "ALL"
+                    --prettyPrint''', odcInstallation: 'DC-OWASP'
+
+                dependencyCheckPublisher pattern: 'dependency-check-report.xml'
+            }
+        }
+    }
+}

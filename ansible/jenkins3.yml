@@ -1,0 +1,35 @@
+---
+- name: Jenkins plugins global configuration
+  hosts: remote_jenkins
+  gather_facts: no
+  vars_files:
+    - vars/jenkins_vars.yml
+  tasks:
+    - name: install selinux python req
+      yum:
+        name: libselinux-python
+        state: installed
+    - name: Put SELinux in permissive mode, logging actions that would be blocked.
+      selinux:
+        policy: targeted
+        state: permissive
+    - name: OWASP DC installing
+      copy:
+        src: "{{odc_xml}}"
+        dest: /var/lib/jenkins/org.jenkinsci.plugins.DependencyCheck.tools.DependencyCheckInstallation.xml
+        owner: jenkins
+        group: jenkins
+        mode: 0644
+       #when: jenkins_plugin_config_Dependency_check_enable | bool
+      notify: Restart_Jenkins
+    - name: snyk Installation 
+      copy:
+        src: "{{snyk_groovy}}"
+        dest: /var/lib/jenkins/init.groovy.d/4_ConfigSnyk.groovy
+        owner: jenkins
+        group: jenkins
+  handlers:
+    - name: Restart_Jenkins
+      service:
+        name: jenkins
+        state: restarted
